@@ -1,0 +1,11 @@
+=== nslookup www.baidu.com ===
+非权威应答:
+服务器:  public1.114dns.com
+Address:  114.114.114.114
+
+名称:    www.a.shifen.com
+Addresses:  240e:ff:e020:98c:0:ff:b061:c306
+	  240e:ff:e020:99b:0:ff:b099:cff1
+	  183.2.172.177
+Aliases:  www.baidu.com
+
