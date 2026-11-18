@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",sans-serif;background:#f4f6f8;color:#222;padding:22px 26px;width:1120px}
+h2{font-size:19px;text-align:center;margin-bottom:14px;color:#1a3a6b}
+.card{background:#fff;border:1px solid #d9dee5;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.hd{background:#263238;color:#e8eaed;padding:6px 12px;font-size:12px;font-weight:bold;display:flex;justify-content:space-between}
+.hd .tag{background:#0b8043;color:#fff;border-radius:4px;padding:1px 7px;font-size:11px}
+pre{font-family:Consolas,"Courier New",monospace;font-size:12px;line-height:1.5;padding:10px 14px;color:#263238;white-space:pre-wrap}
+.k{color:#0b57d0;font-weight:bold}.v{color:#c5221f;font-weight:bold}.c{color:#5f6368}
+.grid{display:flex;gap:12px}
+.grid .card{flex:1}
+.sum{background:#e8f0fe;border-left:4px solid #1a73e8;padding:9px 12px;font-size:12px;line-height:1.7;border-radius:4px;margin-top:4px}
+.sum b{color:#1a3a6b}
+</style></head><body>
+<h2>本机网络配置验证与连通性测试（真实命令输出）</h2>
+<div class="grid">
+ <div class="card"><div class="hd">ipconfig /all（WLAN 关键项）<span class="tag">配置</span></div><pre><span class="k">适配器</span>    无线局域网适配器 WLAN
+<span class="k">物理地址</span>    <span class="v">F8-54-F6-60-88-06</span>
+<span class="k">IPv4 地址</span>   <span class="v">10.250.0.162</span>
+<span class="k">子网掩码</span>    255.255.255.0
+<span class="k">默认网关</span>    <span class="v">10.250.0.1</span>
+<span class="k">DNS 服务器</span>  <span class="v">114.114.114.114</span></pre></div>
+ <div class="card"><div class="hd">netstat -ano（活动 TCP 连接节选）<span class="tag">连接</span></div><pre><span class="c">协议   本地地址            外部地址            状态           PID</span>
+TCP  10.250.0.162:50771  14.17.83.246:443    ESTABLISHED  17064
+TCP  10.250.0.162:52078  39.97.249.220:443   ESTABLISHED  32968
+TCP  10.250.0.162:53541  74.151.238.132:443  ESTABLISHED  23880
+TCP  10.250.0.162:54438  1.12.12.12:443      ESTABLISHED  48020</pre></div>
+</div>
+<div class="grid">
+ <div class="card"><div class="hd">ping 10.250.0.1（默认网关）<span class="tag">连通</span></div><pre>正在 Ping 10.250.0.1 具有 32 字节的数据:
+来自 10.250.0.1 的回复: 字节=32 时间=<span class="v">7ms</span> TTL=<span class="v">255</span>
+来自 10.250.0.1 的回复: 字节=32 时间=24ms TTL=255
+来自 10.250.0.1 的回复: 字节=32 时间=11ms TTL=255
+来自 10.250.0.1 的回复: 字节=32 时间=8ms  TTL=255
+统计: 发送 4 / 接收 4 / 丢失 0 (0%)
+最短=<span class="v">7ms</span>  最长=24ms  <span class="v">平均=12ms</span></pre></div>
+ <div class="card"><div class="hd">ping 223.5.5.5（外网 DNS）<span class="tag">连通</span></div><pre>正在 Ping 223.5.5.5 具有 32 字节的数据:
+来自 223.5.5.5 的回复: 字节=32 时间=<span class="v">15ms</span> TTL=<span class="v">50</span>
+来自 223.5.5.5 的回复: 字节=32 时间=33ms TTL=50
+来自 223.5.5.5 的回复: 字节=32 时间=34ms TTL=50
+来自 223.5.5.5 的回复: 字节=32 时间=15ms TTL=50
+统计: 发送 4 / 接收 4 / 丢失 0 (0%)
+最短=15ms  最长=34ms  <span class="v">平均=24ms</span></pre></div>
+</div>
+<div class="card"><div class="hd">nslookup www.baidu.com（域名解析）<span class="tag">DNS</span></div><pre>非权威应答:
+服务器:  public1.114dns.com
+Address:  <span class="v">114.114.114.114</span>
+名称:    www.a.shifen.com
+Addresses:  240e:ff:e020:98c:0:ff:b061:c306
+            240e:ff:e020:99b:0:ff:b099:cff1
+            <span class="v">183.2.172.177</span>
+Aliases:  www.baidu.com</pre></div>
+<div class="sum"><b>输出解释：</b>① <b>ipconfig</b> 显示本机 IPv4=10.250.0.162、网关=10.250.0.1、DNS=114.114.114.114 —— 属私有地址段，经 NAT 上网。② <b>ping 网关</b> TTL=255 说明是直连下一跳（未经过路由器减跳）；<b>ping 外网</b> TTL=50 说明中途经过多个路由器逐跳递减，0% 丢包证明链路通畅。③ <b>nslookup</b> 显示域名 www.baidu.com 是 CNAME 别名，最终解析到 A 记录 183.2.172.177 与两条 AAAA（IPv6）记录，由 114 DNS 服务器应答。④ <b>netstat</b> 中状态 ESTABLISHED 的 TCP 连接目的端口均为 443，证明 HTTPS 会话正常建立。</div>
+</body></html>
