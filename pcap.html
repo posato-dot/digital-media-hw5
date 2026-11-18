@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",sans-serif;background:#fff;color:#222;padding:22px 26px;width:1120px}
+h2{font-size:19px;text-align:center;margin-bottom:3px;color:#1a3a6b}
+.sub{text-align:center;font-size:11px;color:#777;margin-bottom:14px}
+.banner{background:#fff8e1;border:1px solid #f0c36d;border-radius:6px;padding:8px 12px;font-size:11px;color:#7a5a00;line-height:1.6;margin-bottom:14px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th,.tbl td{border:1px solid #cfd8e3;padding:6px 9px;text-align:left;vertical-align:top;line-height:1.5}
+.tbl th{background:#eef3fb;color:#1a3a6b;width:110px;white-space:nowrap}
+.tbl .layer{background:#4a6fa5;color:#fff;font-weight:bold;text-align:center;width:92px;font-size:13px}
+.tbl .l2{background:#2e8b57}.tbl .l3{background:#b8860b}.tbl .l4{background:#b23a48}
+.k{color:#0b57d0;font-weight:bold}.v{color:#c5221f;font-weight:bold}
+.hdrbar{display:flex;gap:2px;margin-top:3px;font-size:10px}
+.hdrbar span{padding:1px 5px;border-radius:3px;color:#fff}
+.note{margin-top:12px;font-size:11px;color:#444;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:9px 12px;line-height:1.75}
+.note b{color:#1a3a6b}
+</style></head><body>
+<h2>抓包字段逐层解析：Frame / Ethernet II / IPv4 / TCP</h2>
+<div class="sub">样本连接：本机 10.250.0.162:50771 → 14.17.83.246:443（取自 netstat -ano 的真实 ESTABLISHED 连接）</div>
+<div class="banner">⚠ 本机未安装 Wireshark / tshark，且无管理员权限开启原始套接字抓包。按实验指南「未安装则提交说明」的要求，改用<b>真实连接的 MAC / IP / 端口字段</b>逐层展开协议头；其中 MAC 来自 ipconfig 与 arp 表实测，IP/端口来自 netstat 实测，序号与标志位为 TCP 首部的标准字段示意（需抓包软件才能读取实时值）。</div>
+<table class="tbl">
+<tr><td class="layer">Frame<br>帧</td><th>抓包概览</th><td>接口：WLAN（F8-54-F6-60-88-06） · 帧长度：以太网最小 64 B / 典型 1514 B · 捕获时间：本机实时 · 协议：TCP / HTTPS</td></tr>
+<tr><td class="layer l2">Ethernet II<br>数据链路层</td><th>源 MAC</th><td><span class="v">F8-54-F6-60-88-06</span>（本机 WLAN 网卡，ipconfig /all 实测）</td></tr>
+<tr><td></td><th>目的 MAC</th><td><span class="v">3C-15-FB-A9-72-2F</span>（默认网关 10.250.0.1，arp -a 实测）—— 发往外网时下一跳是网关，故目的 MAC 是网关而非最终服务器</td></tr>
+<tr><td></td><th>类型字段</th><td><span class="k">0x0800</span> = IPv4（若是 0x86DD 则为 IPv6）</td></tr>
+<tr><td class="layer l3">IPv4<br>网络层</td><th>源 / 目的 IP</th><td>源 <span class="v">10.250.0.162</span>（本机私有地址） → 目的 <span class="v">14.17.83.246</span>（对端公网服务器）</td></tr>
+<tr><td></td><th>版本 / 首部长度</th><td>Version = <span class="k">4</span> · IHL = 5（20 字节，无可选字段）</td></tr>
+<tr><td></td><th>TTL</th><td><span class="k">64</span>（Windows 主机默认值；每经一个路由器减 1，归 0 则丢弃）</td></tr>
+<tr><td></td><th>协议号</th><td><span class="k">6</span> = TCP（17 = UDP，1 = ICMP）</td></tr>
+<tr><td class="layer l4">TCP<br>传输层</td><th>源 / 目的端口</th><td>源 <span class="v">50771</span>（本机临时端口） → 目的 <span class="v">443</span>（HTTPS 服务端口）</td></tr>
+<tr><td></td><th>序号 / 确认号</th><td>Sequence Number、Acknowledgment Number：用于按序重组与可靠传输（实时值需抓包读取）</td></tr>
+<tr><td></td><th>标志位 / 窗口</th><td>SYN / ACK / FIN / RST 等控制位；Window 用于流量控制</td></tr>
+</table>
+<div class="note">
+<b>字段作用范围辨析（对应「常见问题」）：</b><br>
+• <b>MAC</b>（F8-54…/3C-15…）：只在<b>同一链路</b>内有效，每经过一个路由器就被重写一次 —— 本帧目的 MAC 是网关的，不是 14.17.83.246 的。<br>
+• <b>IP</b>（10.250.0.162/14.17.83.246）：<b>端到端</b>保持不变，标识源主机与最终目的主机。<br>
+• <b>端口</b>（50771/443）：标识端到端的<b>应用进程</b>，443 说明这是 HTTPS 流量。<br>
+• <b>HTTP 是应用层协议</b>，不在传输层；<b>DNS 也是应用层</b>（UDP 53），二者都不属于传输层。
+</div>
+</body></html>
